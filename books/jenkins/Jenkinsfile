@@ -59,7 +59,7 @@ pipeline {
                 echo '### Creating a new app in DEV env ###'
                 sh '''
                         oc project ${DEV_PROJECT}
-                        oc new-app --name books nodejs:12~${APP_GIT_URL} --build-env npm_config_registry=${NEXUS_SERVER} --context-dir ${APP_NAME}
+                        oc new-app --name books nodejs:12~${APP_GIT_URL} --build-env npm_config_registry=${NEXUS_SERVER} --context-dir ${APP_NAME} --as-deployment-config 
                         oc expose svc/${APP_NAME}
                    '''
             }
@@ -87,8 +87,8 @@ pipeline {
                 script {
                     openshift.withCluster() {
                         openshift.withProject( "${DEV_PROJECT}" ) {
-                            def deployment = openshift.selector("deploy", "${APP_NAME}").rollout()
-                            openshift.selector("deploy", "${APP_NAME}").related('pods').untilEach(1) {
+                            def deployment = openshift.selector("dc", "${APP_NAME}").rollout()
+                            openshift.selector("dc", "${APP_NAME}").related('pods').untilEach(1) {
                                 return (it.object().status.phase == "Running")
                             }
                         }
@@ -122,7 +122,7 @@ pipeline {
                 echo '### Creating a new app in Staging ###'
                 sh '''
                         oc project ${STAGE_PROJECT}
-                        oc new-app --name books -i books:stage
+                        oc new-app --name books -i books:stage --as-deployment-config 
                         oc expose svc/${APP_NAME}
                    '''
             }
@@ -137,8 +137,8 @@ pipeline {
 
                     openshift.withCluster() {
                         openshift.withProject( "${STAGE_PROJECT}" ) {
-                            def deployment = openshift.selector("deploy", "${APP_NAME}").rollout()
-                            openshift.selector("deploy", "${APP_NAME}").related('pods').untilEach(1) {
+                            def deployment = openshift.selector("dc", "${APP_NAME}").rollout()
+                            openshift.selector("dc", "${APP_NAME}").related('pods').untilEach(1) {
                                 return (it.object().status.phase == "Running")
                             }
                         }
